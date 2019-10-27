@@ -1,17 +1,18 @@
 package partupdate
 
 import (
-	"reflect"
-	"errors"
 	"encoding/json"
+	"errors"
 	"io"
+	"reflect"
+	"strings"
 )
 
 /*
- * PartialUpdate generates a string -> interface mapping of the fields sent in the body 
- * of a PATCH/PUT request based on the structure of the collection model
- * [TODO] proper documentation of function
-*/
+ **	PartialUpdate generates a string -> interface mapping of the fields sent in the body
+ ** of a PATCH/PUT request based on the structure of the collection model
+ ** [TODO] proper documentation of function
+ */
 func PartialUpdate(model interface{}, in io.Reader) (map[string]interface{}, error) {
 	if reflect.ValueOf(model).Kind() != reflect.Struct {
 		return nil, errors.New("Model type must be a struct")
@@ -20,20 +21,20 @@ func PartialUpdate(model interface{}, in io.Reader) (map[string]interface{}, err
 	structCount := fields.NumField()
 
 	var newFields = make([]reflect.StructField, structCount)
-	for i:= 0; i < structCount; i++ {
+	for i := 0; i < structCount; i++ {
 		name := fields.Field(i).Name
 		typ := reflect.PtrTo(fields.Field(i).Type)
 		var tag reflect.StructTag
 		if iftag, ok := fields.Field(i).Tag.Lookup("json"); ok {
-			tag = reflect.StructTag(`json:"`+iftag+`,omitempty"`)
-		}	else {
-			tag = reflect.StructTag(`json:"`+name+`,omitempty"`)
+			tag = reflect.StructTag(`json:"` + strings.Split(iftag, ",")[0] + `,omitempty"`)
+		} else {
+			tag = reflect.StructTag(`json:"` + name + `,omitempty"`)
 		}
 		newFields[i] = reflect.StructField{
-			Name:name,
+			Name: name,
 			Type: typ,
-			Tag: tag,
-		} 
+			Tag:  tag,
+		}
 	}
 
 	newStruct := reflect.New(reflect.StructOf(newFields)).Interface()
@@ -51,6 +52,6 @@ func PartialUpdate(model interface{}, in io.Reader) (map[string]interface{}, err
 	if err = json.Unmarshal(p, &endMap); err != nil {
 		return nil, err
 	}
-	
+
 	return endMap, nil
 }
