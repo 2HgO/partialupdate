@@ -1,4 +1,4 @@
-package partupdate
+package partialupdate
 
 import (
 	"bytes"
